@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>কথা</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,600&display=swap');
+  :root{
+    --ink:#241B3A; --plum:#3A2E5C; --plum-deep:#231A3D; --mustard:#E8A33D;
+    --cream:#FBF7EE; --panel:#FFFFFF; --line:#EAE3D3;
+    --unseen:#DDEFDD; --unseen-border:#8FC98F; --seen:#DCE8FB; --seen-border:#7FA8E8;
+    --muted:#8A8296;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{ margin:0; font-family:'Hind Siliguri', sans-serif; background:linear-gradient(180deg,#2A2145,#1B1530); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;}
+  .phone{ width:390px; max-width:100%; height:800px; background:var(--cream); border-radius:36px; box-shadow:0 30px 80px rgba(0,0,0,.5), 0 0 0 10px #120C22; overflow:hidden; display:flex; flex-direction:column; position:relative;}
+  .screen{ display:none; flex-direction:column; height:100%; position:relative;}
+  .screen.active{ display:flex; }
+  .topbar{ background:var(--plum-deep); color:#fff; padding:18px 20px 14px; flex-shrink:0; }
+  .topbar .eyebrow{ font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--mustard); font-weight:600; margin-bottom:2px;}
+  .topbar h1{ font-family:'Fraunces', serif; font-weight:700; font-size:24px; margin:0; }
+  .bottomnav{ display:flex; background:var(--panel); border-top:1px solid var(--line); flex-shrink:0; padding:8px 4px calc(8px + env(safe-area-inset-bottom));}
+  .navbtn{ flex:1; background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 2px; cursor:pointer; color:var(--muted); font-family:'Hind Siliguri',sans-serif;}
+  .navbtn .ic{ font-size:19px; } .navbtn .lb{ font-size:10px; font-weight:600; } .navbtn.active{ color:var(--plum); }
+  .navbtn{position:relative;} .navbtn .badge{position:absolute; top:1px; right:16px; min-width:16px; text-align:center;}
+  .reactor-list{margin-top:8px;padding:8px 10px;background:var(--cream);border-radius:10px;font-size:11.5px;color:var(--muted);border:1px solid var(--line);}
+  .reply-row{margin:6px 0;padding:7px 9px;background:var(--cream);border-radius:10px;border:1px solid var(--line);}
+  .reply-row .reply-head{font-size:11px;font-weight:700;color:var(--plum);margin-bottom:2px;} .reply-row .reply-text{font-size:12px;color:var(--ink);}
+  .reply-actions{display:flex;gap:6px;margin-top:5px;} .reply-action{font-size:10.5px;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:4px 7px;color:var(--plum);cursor:pointer;font-family:'Hind Siliguri',sans-serif;}
+  .navbtn .badge{ position:relative; top:-10px; left:12px; background:var(--mustard); color:var(--plum-deep); font-size:9px; font-weight:700; border-radius:8px; padding:1px 5px; margin-left:-8px;}
+  .list-body{ padding:14px 16px; overflow-y:auto; flex:1; }
+  .section-label{ font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:600; margin:12px 4px 8px; }
+  .card{ background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:13px; display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  .avatar{ width:44px;height:44px;border-radius:50%; display:flex;align-items:center;justify-content:center; font-family:'Fraunces',serif; font-weight:700; font-size:17px; color:#fff; flex-shrink:0; background:var(--plum);}
+  .grow{ flex:1; min-width:0; }
+  .name{ font-weight:600; font-size:15px; color:var(--ink); }
+  .sub{ font-size:12px; color:var(--muted); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .actions{ display:flex; gap:6px; flex-shrink:0; }
+  .btn{ border:none; border-radius:10px; padding:8px 12px; font-family:'Hind Siliguri',sans-serif; font-weight:600; font-size:13px; cursor:pointer; }
+  .btn-accept{ background:var(--plum); color:#fff; } .btn-reject{ background:#F2E9E9; color:#8A4B4B; }
+  .btn-block{ background:var(--plum); color:#fff; width:100%; padding:12px; border-radius:12px; font-size:14px; margin-top:6px;}
+  .empty{ text-align:center; color:var(--muted); font-size:13px; padding:40px 20px; }
+  .field{ width:100%; border:1.5px solid var(--line); border-radius:12px; padding:11px 14px; font-family:'Hind Siliguri',sans-serif; font-size:14px; background:var(--cream); outline:none; margin-bottom:10px;}
+  .field:focus{ border-color:var(--plum); }
+  .auth-wrap{ padding:26px 22px; overflow-y:auto; flex:1; display:flex; flex-direction:column;}
+  .auth-wrap .brand{ font-family:'Fraunces',serif; font-weight:700; font-size:30px; color:var(--plum-deep); text-align:center; margin:10px 0 4px;}
+  .auth-wrap .tag{ text-align:center; color:var(--muted); font-size:12.5px; margin-bottom:24px;}
+  .gender-row{ display:flex; gap:8px; margin-bottom:14px;}
+  .gp-btn{ flex:1; border:1.5px solid var(--line); background:var(--panel); border-radius:10px; padding:9px 6px; font-size:12.5px; cursor:pointer; font-family:'Hind Siliguri',sans-serif;}
+  .gp-btn.active{ border-color:var(--plum); background:var(--plum); color:#fff; font-weight:600;}
+  .switch-link{ text-align:center; font-size:12.5px; color:var(--plum); margin-top:14px; cursor:pointer; font-weight:600;}
+  .err-msg{ color:#B45858; font-size:12.5px; margin:-4px 0 10px; min-height:14px;}
+  .chat-top{ background:var(--plum-deep); color:#fff; padding:12px; display:flex; align-items:center; gap:10px; flex-shrink:0; }
+  .icbtn{ background:none; border:none; color:#fff; font-size:19px; cursor:pointer; padding:4px 6px; }
+  .chat-top .who{ flex:1; min-width:0; }
+  .chat-top .name{ font-weight:600; font-size:14.5px; color:#fff; } .chat-top .status{ font-size:10.5px; color:#C9BFE0; }
+  .messages{ flex:1; overflow-y:auto; padding:14px 12px 6px; display:flex; flex-direction:column; gap:3px; background:var(--cream); }
+  .bubble-wrap{ display:flex; flex-direction:column; max-width:80%; margin-bottom:6px;}
+  .bubble-wrap.me{ align-self:flex-end; align-items:flex-end; } .bubble-wrap.them{ align-self:flex-start; align-items:flex-start; }
+  .bubble{ padding:9px 13px; border-radius:16px; font-size:14.5px; line-height:1.4; color:var(--ink); border:1.5px solid transparent; transition:background .4s, border-color .4s;}
+  .bubble.unseen{ background:var(--unseen); border-color:var(--unseen-border); } .bubble.seen{ background:var(--seen); border-color:var(--seen-border); }
+  .bubble-wrap.me .bubble{ border-bottom-right-radius:4px; } .bubble-wrap.them .bubble{ border-bottom-left-radius:4px; }
+  .meta{ font-size:9.5px; color:var(--muted); margin-top:2px; padding:0 2px;}
+  .typing-row{ display:flex; align-items:center; gap:8px; padding:2px 10px 6px; min-height:32px; }
+  .pulse-dot{ width:14px; height:14px; border-radius:50%; background:var(--mustard); box-shadow:0 0 6px 2px rgba(232,163,61,.6); animation: pulseGlow 1s ease-in-out infinite; }
+  @keyframes pulseGlow{ 0%,100%{ transform:scale(.7); opacity:.5; box-shadow:0 0 3px 1px rgba(232,163,61,.4);} 50%{ transform:scale(1.15); opacity:1; box-shadow:0 0 10px 4px rgba(232,163,61,.8);} }
+  .bubble.pinned{ background:#FBDCDC!important; border-color:#E39A9A!important; }
+  .pin-flag{ font-size:9.5px; color:#B45858; font-weight:700; margin-bottom:2px; }
+  .quote-block{ font-size:11px; background:rgba(0,0,0,.06); border-left:3px solid var(--plum); border-radius:6px; padding:4px 8px; margin-bottom:3px; color:var(--muted); }
+  .fwd-label{ font-size:9.5px; color:var(--muted); font-style:italic; margin-bottom:2px; }
+  .msg-actions{ display:none; gap:6px; padding:4px 12px; background:var(--panel); border-top:1px solid var(--line); }
+  .msg-actions.active{ display:flex; }
+  .mini-btn{ font-size:10.5px; background:var(--cream); border:1px solid var(--line); border-radius:8px; padding:5px 9px; cursor:pointer; color:var(--plum); font-family:'Hind Siliguri',sans-serif; }
+  .reply-preview{ display:none; background:var(--panel); border-top:1px solid var(--line); padding:7px 12px; align-items:center; gap:8px; }
+  .reply-preview.active{ display:flex; }
+  .reply-preview .txt{ flex:1; font-size:11.5px; color:var(--muted); border-left:3px solid var(--plum); padding-left:8px; }
+  .reply-preview .x{ background:none; border:none; font-size:15px; color:var(--muted); cursor:pointer; }
+  .composer{ display:flex; align-items:center; gap:6px; padding:8px 10px; background:var(--panel); border-top:1px solid var(--line); flex-shrink:0; }
+  .composer input{ flex:1; border:1.5px solid var(--line); border-radius:20px; padding:9px 14px; font-family:'Hind Siliguri',sans-serif; font-size:14px; background:var(--cream); outline:none; }
+  .round-btn{ background:var(--plum); color:#fff; border:none; border-radius:50%; width:38px; height:38px; font-size:15px; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center;}
+  .letter-card{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px; margin-bottom:10px; }
+  .letter-head{ display:flex; align-items:center; gap:8px; margin-bottom:8px; } .letter-head .name{ font-size:13px; }
+  .letter-body{ font-family:'Fraunces',serif; font-style:italic; font-size:14.5px; color:var(--ink); line-height:1.5; border-left:3px solid var(--mustard); padding-left:10px; }
+  .letter-time{ font-size:10.5px; color:var(--muted); margin-top:6px; }
+  .letter-foot{ display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
+  .reactions{ display:flex; gap:5px; }
+  .reaction-btn{ border:1px solid var(--line); background:var(--cream); border-radius:12px; padding:3px 8px; font-size:12.5px; cursor:pointer; display:flex; align-items:center; gap:3px; }
+  .reaction-btn.active{ border-color:var(--mustard); background:#FDF1DC; }
+  .reaction-btn .cnt{ font-size:10.5px; color:var(--muted); }
+  .comment-toggle{ font-size:11.5px; color:var(--plum); background:none; border:none; cursor:pointer; font-family:'Hind Siliguri',sans-serif; font-weight:600; }
+  .comments-box{ display:none; margin-top:10px; border-top:1px dashed var(--line); padding-top:10px; }
+  .comments-box.active{ display:block; }
+  .comment-row{ display:flex; gap:6px; margin-bottom:6px; font-size:12.5px; }
+  .comment-row .cname{ font-weight:600; color:var(--ink); flex-shrink:0; }
+  .comment-row .ctext{ color:var(--muted); }
+  .comment-add{ display:flex; gap:6px; margin-top:6px; }
+  .comment-add input{ flex:1; border:1px solid var(--line); border-radius:10px; padding:6px 10px; font-size:12.5px; font-family:'Hind Siliguri',sans-serif; outline:none; }
+  .comment-add button{ background:var(--plum); color:#fff; border:none; border-radius:10px; padding:0 12px; font-size:12px; cursor:pointer; }
+  .privacy-toggle{ display:flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); margin-top:8px; }
+  .own-tag{ font-size:9.5px; background:var(--mustard); color:var(--plum-deep); border-radius:6px; padding:1px 6px; font-weight:700; }
+  .group-badge{ font-size:9px; background:var(--plum); color:#fff; border-radius:6px; padding:1px 6px; font-weight:700; margin-left:4px; }
+  .newgroup-btn{ background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25); color:#fff; border-radius:10px; padding:6px 12px; font-size:12px; cursor:pointer; font-family:'Hind Siliguri',sans-serif; float:right; margin-top:-32px; }
+  .friend-pick-row{ display:flex; align-items:center; gap:10px; padding:9px 4px; border-bottom:1px solid var(--line); }
+  .friend-pick-row input{ width:17px; height:17px; }
+  .sender-label{ font-size:10.5px; font-weight:700; color:#7A5BAE; margin-bottom:1px; }
+  .fab{ position:absolute; right:18px; bottom:82px; background:var(--mustard); color:var(--plum-deep); border:none; border-radius:50%; width:52px; height:52px; font-size:22px; box-shadow:0 8px 20px rgba(0,0,0,.3); cursor:pointer; }
+  .profile-head{ display:flex; flex-direction:column; align-items:center; padding:20px; gap:8px; }
+  .profile-head .avatar{ width:70px; height:70px; font-size:26px; }
+  .profile-head .pname{ font-family:'Fraunces',serif; font-weight:700; font-size:19px; color:var(--ink); }
+  .setting-row{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px; display:flex; align-items:center; gap:12px; margin:0 16px 10px; }
+  .setting-row .info{ flex:1; } .setting-row .t{ font-size:14px; font-weight:600; color:var(--ink); } .setting-row .d{ font-size:11.5px; color:var(--muted); margin-top:2px; }
+  .switch{ width:42px; height:24px; border-radius:12px; background:var(--line); position:relative; cursor:pointer; flex-shrink:0; transition:background .25s;}
+  .switch.on{ background:var(--plum); } .switch .knob{ width:18px;height:18px;border-radius:50%;background:#fff; position:absolute; top:3px; left:3px; transition:left .25s;}
+  .switch.on .knob{ left:21px; }
+  .modal-bg{ display:none; position:absolute; inset:0; background:rgba(35,26,61,.55); z-index:50; align-items:flex-end; }
+  .modal-bg.active{ display:flex; }
+  .modal{ background:var(--panel); width:100%; border-radius:22px 22px 0 0; padding:18px; }
+  .modal h3{ font-family:'Fraunces',serif; margin:0 0 10px; color:var(--ink); font-size:17px; }
+  .modal textarea{ width:100%; min-height:90px; border:1.5px solid var(--line); border-radius:12px; padding:10px; font-family:'Hind Siliguri',sans-serif; font-size:14px; resize:none; outline:none; }
+  .modal-actions{ display:flex; gap:8px; margin-top:12px; } .modal-actions .btn{ flex:1; text-align:center; padding:10px; }
+  .btn-cancel{ background:var(--cream); color:var(--muted); } .btn-post{ background:var(--plum); color:#fff; }
+  .report-opt{ display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--ink); background:var(--cream); border:1px solid var(--line); border-radius:10px; padding:9px 10px; }
+  .toast{ position:absolute; bottom:90px; left:50%; transform:translateX(-50%); background:var(--plum-deep); color:#fff; font-size:12px; padding:8px 16px; border-radius:20px; opacity:0; pointer-events:none; transition:opacity .3s; z-index:60; white-space:nowrap;}
+  .toast.show{ opacity:1; }
+  .loading{ text-align:center; padding:40px; color:var(--muted); font-size:13px;}
+  .more-menu{ display:none; position:absolute; top:52px; right:12px; background:var(--panel); border:1px solid var(--line); border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,.2); z-index:40; overflow:hidden; }
+  .more-menu.active{ display:block; }
+  .mm-item{ display:block; width:100%; text-align:left; background:none; border:none; padding:11px 16px; font-family:'Hind Siliguri',sans-serif; font-size:13.5px; color:#B45858; cursor:pointer; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<div class="phone">
+
+  <!-- ===== AUTH: SIGNUP ===== -->
+  <div class="screen active" id="screen-signup">
+    <div class="auth-wrap">
+      <div class="brand">কথা</div>
+      <div class="tag">বন্ধুদের সাথে সহজ, ব্যক্তিগত কথোপকথন</div>
+      <input class="field" id="su-username" placeholder="ইউজারনেম">
+      <input class="field" id="su-password" type="password" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)">
+      <div class="section-label" style="margin:0 0 8px;">জেন্ডার — এটাই ফাইনাল, পরে বদলানো যাবে না</div>
+      <div class="gender-row" id="su-gender">
+        <button class="gp-btn" data-g="boy">ছেলে</button>
+        <button class="gp-btn" data-g="girl">মেয়ে</button>
+        <button class="gp-btn" data-g="other">অন্যান্য</button>
+      </div>
+      <div class="err-msg" id="su-err"></div>
+      <button class="btn-block" onclick="doSignup()">অ্যাকাউন্ট তৈরি করো</button>
+      <div class="switch-link" onclick="showScreen('screen-login')">আগে থেকেই অ্যাকাউন্ট আছে? লগইন করুন</div>
+    </div>
+  </div>
+
+  <!-- ===== AUTH: LOGIN ===== -->
+  <div class="screen" id="screen-login">
+    <div class="auth-wrap">
+      <div class="brand">কথা</div>
+      <div class="tag">আবার স্বাগতম</div>
+      <input class="field" id="li-username" placeholder="ইউজারনেম">
+      <input class="field" id="li-password" type="password" placeholder="পাসওয়ার্ড">
+      <div class="err-msg" id="li-err"></div>
+      <button class="btn-block" onclick="doLogin()">লগইন করো</button>
+      <div class="switch-link" onclick="showScreen('screen-signup')">নতুন অ্যাকাউন্ট খুলুন</div>
+    </div>
+  </div>
+
+  <!-- ===== FRIENDS ===== -->
+  <div class="screen" id="screen-friends">
+    <div class="topbar"><div class="eyebrow">হোম</div><h1>কথা</h1><button class="newgroup-btn" onclick="openGroupModal()">+ গ্রুপ</button></div>
+    <div class="list-body">
+      <input class="field" id="addFriendInput" placeholder="ইউজারনেম দিয়ে বন্ধু খুঁজুন">
+      <button class="btn-block" style="margin-bottom:14px;" onclick="sendFriendRequest()">রিকুয়েস্ট পাঠাও</button>
+      <div id="friendsList"></div>
+    </div>
+    <div class="bottomnav" id="nav"></div>
+  </div>
+
+  <!-- ===== REQUESTS ===== -->
+  <div class="screen" id="screen-requests">
+    <div class="topbar"><div class="eyebrow">রিকুয়েস্ট বক্স</div><h1>রিকুয়েস্ট</h1></div>
+    <div class="list-body" id="requestsList"></div>
+    <div class="bottomnav" id="nav2"></div>
+  </div>
+
+  <!-- ===== LETTERS ===== -->
+  <div class="screen" id="screen-letters">
+    <div class="topbar"><div class="eyebrow">বন্ধুদের কথা</div><h1>পত্র</h1></div>
+    <div class="list-body" id="lettersList"></div>
+    <button class="fab" onclick="openModal('letterModal')">✎</button>
+    <div class="bottomnav" id="nav3"></div>
+  </div>
+
+  <!-- ===== PROFILE ===== -->
+  <div class="screen" id="screen-profile">
+    <div class="topbar"><div class="eyebrow">সেটিংস</div><h1>প্রোফাইল</h1></div>
+    <div class="list-body" style="padding-left:0;padding-right:0;">
+      <div class="profile-head">
+        <div class="avatar" id="pf-avatar">?</div>
+        <div class="pname" id="pf-username">...</div>
+      </div>
+      <div class="section-label" style="margin-left:16px;">জেন্ডার</div>
+      <div class="setting-row"><div class="info"><div class="t" id="pf-gender">...</div><div class="d">🔒 সাইনআপে নির্ধারিত, বদলানো যায় না</div></div></div>
+      <div class="section-label" style="margin-left:16px;">প্রাইভেসি</div>
+      <div class="setting-row">
+        <div class="info"><div class="t">কপি ডিটেকশন</div><div class="d">অন থাকলে কেউ আপনার মেসেজ কপি করলে বন্ধুকে জানানো হবে</div></div>
+        <div class="switch" id="ssToggle" onclick="toggleSwitch(this)"><div class="knob"></div></div>
+      </div>
+      <button class="btn-block" style="margin:20px 16px 0; width:calc(100% - 32px); background:#F2E9E9; color:#8A4B4B;" onclick="doLogout()">লগআউট</button>
+    </div>
+    <div class="bottomnav" id="nav4"></div>
+  </div>
+
+  <!-- ===== CHAT ===== -->
+  <div class="screen" id="screen-chat">
+    <div class="chat-top">
+      <button class="icbtn" onclick="goTo('friends')">←</button>
+      <div class="who"><div class="name" id="chatName">...</div><div class="status">বন্ধু</div></div>
+      <button class="icbtn" onclick="toggleMoreMenu()">⋮</button>
+    </div>
+    <div class="more-menu" id="moreMenu"><button class="mm-item" onclick="reportUser()">🚩 রিপোর্ট করুন</button></div>
+    <div class="messages" id="messages"></div>
+    <div class="typing-row" id="typingRow" style="visibility:hidden;"><div class="pulse-dot"></div></div>
+    <div class="msg-actions" id="msgActionBar">
+      <button class="mini-btn" onclick="doReply()">↩ রিপ্লাই</button>
+      <button class="mini-btn" onclick="openForwardPicker()">➦ ফরওয়ার্ড</button>
+      <button class="mini-btn" onclick="doPin()">📌 পিন</button>
+      <button class="mini-btn" onclick="closeMsgActions()">✕</button>
+    </div>
+    <div class="reply-preview" id="replyPreview">
+      <div class="txt" id="replyText"></div>
+      <button class="x" onclick="cancelReply()">✕</button>
+    </div>
+    <div class="composer">
+      <input type="text" placeholder="মেসেজ লিখুন..." id="msgInput" oninput="onTypingInput()">
+      <button class="round-btn" onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <div class="modal-bg" id="letterModal">
+    <div class="modal">
+      <h3>নতুন পত্র লিখুন</h3>
+      <textarea id="letterInput" placeholder="ছোট করে মনের কথা লিখুন..."></textarea>
+      <div class="modal-actions"><button class="btn btn-cancel" onclick="closeModal('letterModal')">বাতিল</button><button class="btn btn-post" onclick="postLetter()">পোস্ট করো</button></div>
+    </div>
+  </div>
+  <div class="modal-bg" id="reportModal">
+    <div class="modal">
+      <h3 id="reportTitle">রিপোর্ট করুন</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:6px;">
+        <label class="report-opt"><input type="radio" name="rr" value="ভুয়া জেন্ডার তথ্য দিয়েছে" checked> ভুয়া জেন্ডার তথ্য দিয়েছে</label>
+        <label class="report-opt"><input type="radio" name="rr" value="হয়রানি / অস্বস্তিকর মেসেজ"> হয়রানি / অস্বস্তিকর মেসেজ</label>
+        <label class="report-opt"><input type="radio" name="rr" value="স্প্যাম"> স্প্যাম</label>
+        <label class="report-opt"><input type="radio" name="rr" value="অন্যান্য"> অন্যান্য</label>
+      </div>
+      <div class="modal-actions"><button class="btn btn-cancel" onclick="closeModal('reportModal')">বাতিল</button><button class="btn btn-post" onclick="submitReport()">জমা দিন</button></div>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="groupModal">
+    <div class="modal">
+      <h3>নতুন গ্রুপ</h3>
+      <input type="text" id="groupNameInput" class="field" placeholder="গ্রুপের নাম">
+      <div id="groupPickList"></div>
+      <div class="modal-actions"><button class="btn btn-cancel" onclick="closeModal('groupModal')">বাতিল</button><button class="btn btn-post" onclick="createGroup()">তৈরি করো</button></div>
+    </div>
+  </div>
+  <div class="modal-bg" id="forwardModal">
+    <div class="modal">
+      <h3>কাকে ফরওয়ার্ড করবেন?</h3>
+      <div id="forwardPickList"></div>
+      <div class="modal-actions"><button class="btn btn-cancel" onclick="closeModal('forwardModal')">বাতিল</button></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import {
+  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import {
+  getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, query, where,
+  onSnapshot, orderBy, serverTimestamp, deleteDoc, getDocs, limit
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBU3-hvvvWAprxaq_BfUv3mhgPZp4--q64",
+  authDomain: "kotha-app-77918.firebaseapp.com",
+  projectId: "kotha-app-77918",
+  storageBucket: "kotha-app-77918.firebasestorage.app",
+  messagingSenderId: "224761561682",
+  appId: "1:224761561682:web:4b85b63572727fda5cd58b",
+  measurementId: "G-C800BNQBDH"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUser = null;      // {uid, username, gender}
+let currentChatUid = null;
+let currentChatId = null;
+let currentIsGroup = false;
+let unsubMessages = null, unsubTyping = null;
+let globalUnreadUnsubs=[], unsubNotifications=null;
+let typingTimeout;
+let unreadMessageCount=0, pendingReqCount=0, unreadLetterCount=0, reactionNoticeCount=0;
+let latestFriendIds=[], latestGroupIds=[];
+const LETTER_SEEN_KEY='kotha_letters_seen_';
+let selectedMsgId = null;
+let replyTarget = null;
+let friendsCache = [];       // [{uid, username}]
+let selectedGroupFriendIds = [];
+const emailFor = (username) => username.trim().toLowerCase() + "@kotha.local";
+const pairId = (a,b) => [a,b].sort().join("_");
+
+/* ---------- UTIL ---------- */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+let toastTimer;
+function showToast(msg){
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=> t.classList.remove('show'), 2000);
+}
+function openModal(id){ document.getElementById(id).classList.add('active'); }
+function closeModal(id){ document.getElementById(id).classList.remove('active'); }
+window.showScreen = showScreen; window.openModal = openModal; window.closeModal = closeModal;
+
+const tabs = [
+  {key:'friends', ic:'💬', lb:'বন্ধু', screen:'screen-friends'},
+  {key:'requests', ic:'➕', lb:'রিকুয়েস্ট', screen:'screen-requests'},
+  {key:'letters', ic:'✉️', lb:'পত্র', screen:'screen-letters'},
+  {key:'profile', ic:'⚙️', lb:'প্রোফাইল', screen:'screen-profile'},
+];
+let activeTab='friends';
+function buildNav(){
+  document.querySelectorAll('.bottomnav').forEach(nav=>{
+    nav.innerHTML = tabs.map(t=>{
+      const count=t.key==='friends'?unreadMessageCount:t.key==='requests'?pendingReqCount:t.key==='letters'?(unreadLetterCount+reactionNoticeCount):0; const badge=count?`<span class="badge">${count>99?'99+':count}</span>`:'';
+      return `<button class="navbtn" data-key="${t.key}" onclick="goTo('${t.key}')"><span class="ic">${t.ic}</span><span class="lb">${t.lb}</span>${badge}</button>`;
+    }).join('');
+  });
+  document.querySelectorAll('.navbtn').forEach(b=> b.classList.toggle('active', b.dataset.key===activeTab));
+}
+function goTo(key){activeTab=key;showScreen(tabs.find(t=>t.key===key).screen);if(key==='letters'&&currentUser){markReactionNotificationsRead();localStorage.setItem(LETTER_SEEN_KEY+currentUser.uid,String(Date.now()));unreadLetterCount=0;}buildNav();}
+window.goTo = goTo;
+
+/* ---------- SIGNUP / LOGIN ---------- */
+document.querySelectorAll('#su-gender .gp-btn').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('#su-gender .gp-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+  });
+});
+window.doSignup = async function(){
+  const username = document.getElementById('su-username').value.trim();
+  const password = document.getElementById('su-password').value;
+  const genderBtn = document.querySelector('#su-gender .gp-btn.active');
+  const errEl = document.getElementById('su-err');
+  errEl.textContent='';
+  if(!username || username.length<3){ errEl.textContent='ইউজারনেম কমপক্ষে ৩ অক্ষর দিন'; return; }
+  if(!/^[a-zA-Z0-9_]+$/.test(username)){ errEl.textContent='শুধু ইংরেজি অক্ষর/সংখ্যা/আন্ডারস্কোর ব্যবহার করুন'; return; }
+  if(!password || password.length<6){ errEl.textContent='পাসওয়ার্ড কমপক্ষে ৬ অক্ষর দিন'; return; }
+  if(!genderBtn){ errEl.textContent='জেন্ডার সিলেক্ট করুন'; return; }
+  try{
+    const unameLower = username.toLowerCase();
+    const takenSnap = await getDoc(doc(db,'usernames',unameLower));
+    if(takenSnap.exists()){ errEl.textContent='এই ইউজারনেম আগে থেকেই নেওয়া হয়েছে'; return; }
+    const cred = await createUserWithEmailAndPassword(auth, emailFor(username), password);
+    await setDoc(doc(db,'users',cred.user.uid), { username, usernameLower: unameLower, gender: genderBtn.dataset.g, createdAt: serverTimestamp() });
+    await setDoc(doc(db,'usernames',unameLower), { uid: cred.user.uid });
+  }catch(e){
+    errEl.textContent = friendlyAuthError(e);
+  }
+};
+window.doLogin = async function(){
+  const username = document.getElementById('li-username').value.trim();
+  const password = document.getElementById('li-password').value;
+  const errEl = document.getElementById('li-err'); errEl.textContent='';
+  if(!username || !password){ errEl.textContent='ইউজারনেম ও পাসওয়ার্ড দিন'; return; }
+  try{ await signInWithEmailAndPassword(auth, emailFor(username), password); }
+  catch(e){ errEl.textContent = friendlyAuthError(e); }
+};
+window.doLogout = async function(){ await signOut(auth); };
+function friendlyAuthError(e){
+  const c = e.code||'';
+  if(c.includes('email-already-in-use')) return 'এই ইউজারনেম আগে থেকেই আছে';
+  if(c.includes('wrong-password') || c.includes('invalid-credential')) return 'ভুল ইউজারনেম বা পাসওয়ার্ড';
+  if(c.includes('user-not-found')) return 'এই ইউজারনেমে কোনো অ্যাকাউন্ট নেই';
+  if(c.includes('weak-password')) return 'পাসওয়ার্ড খুব দুর্বল';
+  return 'কিছু একটা ভুল হয়েছে, আবার চেষ্টা করুন';
+}
+
+/* ---------- AUTH STATE ---------- */
+onAuthStateChanged(auth, async (user)=>{
+  if(user){
+    const uSnap = await getDoc(doc(db,'users',user.uid));
+    if(!uSnap.exists()) return;
+    currentUser = { uid:user.uid, ...uSnap.data() };
+    document.getElementById('pf-username').textContent = '@'+currentUser.username;
+    document.getElementById('pf-avatar').textContent = currentUser.username[0].toUpperCase();
+    const glabel = {boy:'ছেলে',girl:'মেয়ে',other:'অন্যান্য'}[currentUser.gender]||'—';
+    document.getElementById('pf-gender').textContent = glabel;
+    buildNav(); goTo('friends');
+    listenFriends(); listenRequests(); listenGroups(); listenNotifications(); calculateUnreadLetters();
+  } else {globalUnreadUnsubs.forEach(u=>u&&u());globalUnreadUnsubs=[];if(unsubNotifications){unsubNotifications();unsubNotifications=null;}currentUser=null;unreadMessageCount=0;pendingReqCount=0;unreadLetterCount=0;reactionNoticeCount=0;showScreen('screen-signup');buildNav();}
+});
+
+/* ---------- FRIEND REQUESTS ---------- */
+window.sendFriendRequest = async function(){
+  const uname = document.getElementById('addFriendInput').value.trim().toLowerCase();
+  if(!uname){ return; }
+  if(uname === currentUser.username.toLowerCase()){ showToast('নিজেকে রিকুয়েস্ট পাঠানো যাবে না'); return; }
+  const targetSnap = await getDoc(doc(db,'usernames',uname));
+  if(!targetSnap.exists()){ showToast('এই ইউজারনেমে কেউ নেই'); return; }
+  const targetUid = targetSnap.data().uid;
+  const pid = pairId(currentUser.uid, targetUid);
+  const friendshipSnap = await getDoc(doc(db,'friendships',pid));
+  if(friendshipSnap.exists()){ showToast('আপনারা আগে থেকেই বন্ধু'); return; }
+  await setDoc(doc(db,'friendRequests', pid), {
+    from: currentUser.uid, to: targetUid, fromUsername: currentUser.username, status:'pending', createdAt: serverTimestamp()
+  });
+  document.getElementById('addFriendInput').value='';
+  showToast('রিকুয়েস্ট পাঠানো হয়েছে');
+};
+
+function listenRequests(){
+  const q = query(collection(db,'friendRequests'), where('to','==',currentUser.uid), where('status','==','pending'));
+  onSnapshot(q, (snap)=>{
+    pendingReqCount = snap.size; buildNav();
+    const el = document.getElementById('requestsList');
+    if(snap.empty){ el.innerHTML = `<div class="empty">কোনো নতুন রিকুয়েস্ট নেই</div>`; return; }
+    el.innerHTML = '';
+    snap.forEach(d=>{
+      const r = d.data();
+      const card = document.createElement('div'); card.className='card';
+      card.innerHTML = `<div class="avatar">${r.fromUsername[0].toUpperCase()}</div>
+        <div class="grow"><div class="name">${r.fromUsername}</div><div class="sub">আপনাকে মেসেজ করতে চায়</div></div>
+        <div class="actions">
+          <button class="btn btn-reject">না</button>
+          <button class="btn btn-accept">গ্রহণ</button>
+        </div>`;
+      card.querySelector('.btn-reject').onclick = ()=> handleRequest(d.id, r, false);
+      card.querySelector('.btn-accept').onclick = ()=> handleRequest(d.id, r, true);
+      el.appendChild(card);
+    });
+  });
+}
+async function handleRequest(id, r, accept){
+  if(accept){
+    await setDoc(doc(db,'friendships', id), { users:[r.from, r.to], createdAt: serverTimestamp() });
+    showToast(r.fromUsername + ' এখন আপনার বন্ধু');
+  }
+  await deleteDoc(doc(db,'friendRequests', id));
+}
+
+/* ---------- FRIENDS LIST ---------- */
+let latestFriendCards = [];
+let latestGroupCards = [];
+function renderFriendsAndGroups(){
+  const el = document.getElementById('friendsList');
+  const all = [...latestGroupCards, ...latestFriendCards];
+  if(!all.length){ el.innerHTML = `<div class="empty">এখনো কোনো বন্ধু নেই — উপরে ইউজারনেম দিয়ে খুঁজুন</div>`; return; }
+  el.innerHTML = '';
+  all.forEach(item=> el.appendChild(item));
+}
+function listenFriends(){
+  const q = query(collection(db,'friendships'), where('users','array-contains', currentUser.uid));
+  onSnapshot(q, async (snap)=>{
+    if(snap.empty){latestFriendCards=[];friendsCache=[];latestFriendIds=[];renderFriendsAndGroups();rebuildUnreadMessageListeners();return;}
+    const cards = []; const cache = [];
+    for(const d of snap.docs){
+      const users = d.data().users;
+      const friendUid = users.find(u=>u!==currentUser.uid);
+      const fSnap = await getDoc(doc(db,'users',friendUid));
+      if(!fSnap.exists()) continue;
+      const f = fSnap.data();
+      cache.push({uid:friendUid, username:f.username});
+      const card = document.createElement('div'); card.className='card'; card.style.cursor='pointer';
+      card.innerHTML = `<div class="avatar">${f.username[0].toUpperCase()}</div><div class="grow"><div class="name">${f.username}</div><div class="sub">ট্যাপ করে চ্যাট খুলুন</div></div>`;
+      card.onclick = ()=> openChat(friendUid, f.username, f.gender);
+      cards.push(card);
+    }
+    latestFriendCards=cards;friendsCache=cache;latestFriendIds=cache.map(x=>x.uid);renderFriendsAndGroups();rebuildUnreadMessageListeners();
+  });
+}
+
+/* ---------- GROUPS ---------- */
+function listenGroups(){
+  const q = query(collection(db,'groups'), where('members','array-contains', currentUser.uid));
+  onSnapshot(q, (snap)=>{
+    const cards = [];
+    snap.forEach(d=>{
+      const g = d.data();
+      const card = document.createElement('div'); card.className='card'; card.style.cursor='pointer';
+      card.innerHTML = `<div class="avatar" style="background:#7A5BAE;">${g.name[0].toUpperCase()}</div>
+        <div class="grow"><div class="name">${g.name} <span class="group-badge">গ্রুপ</span></div><div class="sub">${g.members.length} জন সদস্য</div></div>`;
+      card.onclick = ()=> openGroupChat(d.id, g.name);
+      cards.push(card);
+    });
+    latestGroupCards=cards;latestGroupIds=snap.docs.map(d=>d.id);renderFriendsAndGroups();rebuildUnreadMessageListeners();
+  });
+}
+window.openGroupModal = function(){
+  selectedGroupFriendIds = [];
+  document.getElementById('groupNameInput').value='';
+  document.getElementById('groupPickList').innerHTML = friendsCache.map(f=>`
+    <label class="friend-pick-row">
+      <input type="checkbox" onchange="toggleGroupPick('${f.uid}', this.checked)">
+      <div class="avatar" style="width:28px;height:28px;font-size:12px;">${f.username[0].toUpperCase()}</div>
+      <span>${f.username}</span>
+    </label>`).join('') || `<div class="empty">আগে কিছু বন্ধু যোগ করুন</div>`;
+  openModal('groupModal');
+};
+window.toggleGroupPick = function(uid, checked){
+  if(checked) selectedGroupFriendIds.push(uid);
+  else selectedGroupFriendIds = selectedGroupFriendIds.filter(x=>x!==uid);
+};
+window.createGroup = async function(){
+  const name = document.getElementById('groupNameInput').value.trim();
+  if(!name || selectedGroupFriendIds.length<1){ showToast('নাম দিন এবং অন্তত একজনকে যোগ করুন'); return; }
+  const members = [currentUser.uid, ...selectedGroupFriendIds];
+  await addDoc(collection(db,'groups'), { name, members, createdBy: currentUser.uid, createdAt: serverTimestamp() });
+  closeModal('groupModal');
+  showToast('গ্রুপ তৈরি হয়েছে');
+};
+
+/* ---------- CHAT ---------- */
+function msgsCollectionRef(){
+  return currentIsGroup ? collection(db,'groups',currentChatId,'messages') : collection(db,'chats',currentChatId,'messages');
+}
+function msgDocRef(id){
+  return currentIsGroup ? doc(db,'groups',currentChatId,'messages',id) : doc(db,'chats',currentChatId,'messages',id);
+}
+async function openChat(friendUid, friendUsername, friendGender){
+  currentChatUid=friendUid; currentChatId=pairId(currentUser.uid,friendUid); currentIsGroup=false;
+  document.getElementById('chatName').textContent=friendUsername; document.querySelector('.chat-top .status').textContent='বন্ধু';
+  startChatCommon();
+  const typingDoc=doc(db,'chats',currentChatId,'typing',friendUid);
+  unsubTyping=onSnapshot(typingDoc,snap=>{document.getElementById('typingRow').style.visibility=(snap.exists()&&snap.data().typing)?'visible':'hidden';},()=>{});
+}
+window.openGroupChat=function(groupId,groupName){currentChatUid=null;currentChatId=groupId;currentIsGroup=true;document.getElementById('chatName').textContent=groupName;document.querySelector('.chat-top .status').textContent='গ্রুপ চ্যাট';document.getElementById('typingRow').style.visibility='hidden';startChatCommon();const typingCol=collection(db,'groups',currentChatId,'typing');unsubTyping=onSnapshot(typingCol,snap=>{const someone=snap.docs.some(d=>d.id!==currentUser.uid&&d.data().typing);document.getElementById('typingRow').style.visibility=someone?'visible':'hidden';},()=>{});};
+function startChatCommon(){
+  document.getElementById('moreMenu').classList.remove('active');
+  document.getElementById('msgInput').value='';
+  cancelReply(); closeMsgActions();
+  showScreen('screen-chat');
+  if(unsubMessages) unsubMessages();
+  if(unsubTyping) unsubTyping();
+
+  const q = query(msgsCollectionRef(), orderBy('createdAt','asc'));
+  unsubMessages = onSnapshot(q, (snap)=>{
+    const el = document.getElementById('messages');
+    if(snap.empty){ el.innerHTML = `<div class="empty">এখনো কোনো মেসেজ নেই — শুভেচ্ছা জানাও!</div>`; return; }
+    el.innerHTML='';
+    const toMarkSeen = [];
+    snap.forEach(docSnap=>{
+      const m = docSnap.data();
+      const mine = m.from===currentUser.uid;
+      if((!currentIsGroup&&!mine&&!m.seen)||(currentIsGroup&&!mine&&!(m.seenBy&&m.seenBy[currentUser.uid])))toMarkSeen.push(docSnap.id);
+      const groupSeen=currentIsGroup?!!(m.seenBy&&m.seenBy[currentUser.uid]):!!m.seen;const cls=m.pinned?'pinned':(groupSeen?'seen':'unseen');
+      const wrap = document.createElement('div'); wrap.className = 'bubble-wrap ' + (mine?'me':'them');
+      let inner = '';
+      if(m.pinned) inner += `<div class="pin-flag">📌 পিন করা</div>`;
+      if(currentIsGroup && !mine && m.fromUsername) inner += `<div class="sender-label">${m.fromUsername}</div>`;
+      if(m.forwarded) inner += `<div class="fwd-label">➦ ফরওয়ার্ড করা মেসেজ</div>`;
+      if(m.replyToText) inner += `<div class="quote-block"></div>`;
+      inner += `<div class="bubble ${cls}"></div>`;
+      inner += `<div class="meta">${mine ? (currentIsGroup ? '' : (m.seen?'দেখেছে':'পাঠানো হয়েছে')) : ''}</div>`;
+      wrap.innerHTML = inner;
+      if(m.replyToText) wrap.querySelector('.quote-block').textContent = m.replyToText;
+      wrap.querySelector('.bubble').textContent = m.text;
+      wrap.querySelector('.bubble').onclick = ()=> selectMsg(docSnap.id, m.text);
+      el.appendChild(wrap);
+    });
+    el.scrollTop = el.scrollHeight;
+    toMarkSeen.forEach(id=>updateDoc(msgDocRef(id),currentIsGroup?{['seenBy.'+currentUser.uid]:true}:{seen:true}).catch(()=>{}));if(toMarkSeen.length)setTimeout(rebuildUnreadMessageListeners,300);
+  });
+}
+
+window.sendMessage = async function(){
+  const input = document.getElementById('msgInput');
+  const text = input.value.trim();
+  if(!text || !currentChatId) return;
+  input.value='';
+  const payload={from:currentUser.uid,text,seen:false,seenBy:{[currentUser.uid]:true},pinned:false,createdAt:serverTimestamp()};
+  if(currentIsGroup) payload.fromUsername = currentUser.username;
+  if(replyTarget) payload.replyToText = replyTarget;
+  await addDoc(msgsCollectionRef(), payload);
+  cancelReply();
+  const typingRef=currentIsGroup?doc(db,'groups',currentChatId,'typing',currentUser.uid):doc(db,'chats',currentChatId,'typing',currentUser.uid);await setDoc(typingRef,{typing:false,username:currentUser.username,updatedAt:serverTimestamp()}).catch(()=>{});
+};
+window.onTypingInput=function(){if(!currentChatId||!currentUser)return;const ref=currentIsGroup?doc(db,'groups',currentChatId,'typing',currentUser.uid):doc(db,'chats',currentChatId,'typing',currentUser.uid);setDoc(ref,{typing:true,username:currentUser.username,updatedAt:serverTimestamp()}).catch(()=>{});clearTimeout(typingTimeout);typingTimeout=setTimeout(()=>setDoc(ref,{typing:false,username:currentUser.username,updatedAt:serverTimestamp()}).catch(()=>{}),1500);};
+
+/* ---------- MESSAGE SELECT / REPLY / PIN / FORWARD ---------- */
+window.selectMsg = function(id, text){
+  selectedMsgId = id; selectedMsgId_text = text;
+  document.getElementById('msgActionBar').classList.add('active');
+};
+window.closeMsgActions = function(){
+  selectedMsgId = null;
+  document.getElementById('msgActionBar').classList.remove('active');
+};
+window.doReply = function(){
+  replyTarget = selectedMsgId_text;
+  document.getElementById('replyText').textContent = replyTarget;
+  document.getElementById('replyPreview').classList.add('active');
+  closeMsgActions();
+  document.getElementById('msgInput').focus();
+};
+window.cancelReply = function(){
+  replyTarget = null;
+  document.getElementById('replyPreview')?.classList.remove('active');
+};
+window.doPin = async function(){
+  const ref = msgDocRef(selectedMsgId);
+  const snap = await getDoc(ref);
+  if(snap.exists()) await updateDoc(ref, { pinned: !snap.data().pinned });
+  closeMsgActions();
+  showToast('মেসেজ পিন করা হয়েছে');
+};
+window.openForwardPicker = function(){
+  document.getElementById('forwardPickList').innerHTML = friendsCache.map(f=>`
+    <div class="card" style="cursor:pointer;" onclick="forwardTo('${f.uid}','${f.username.replace(/'/g,"")}')">
+      <div class="avatar" style="width:34px;height:34px;font-size:14px;">${f.username[0].toUpperCase()}</div>
+      <div class="grow"><div class="name">${f.username}</div></div>
+    </div>`).join('') || `<div class="empty">কোনো বন্ধু নেই</div>`;
+  openModal('forwardModal');
+};
+window.forwardTo = async function(uid, username){
+  const targetChatId = pairId(currentUser.uid, uid);
+  await addDoc(collection(db,'chats',targetChatId,'messages'), {
+    from: currentUser.uid, text: selectedMsgId_text, seen:false, pinned:false, forwarded:true, createdAt: serverTimestamp()
+  });
+  closeModal('forwardModal'); closeMsgActions();
+  showToast(username + ' কে ফরওয়ার্ড করা হয়েছে');
+};
+let selectedMsgId_text = '';
+window.toggleMoreMenu = function(){ document.getElementById('moreMenu').classList.toggle('active'); };
+window.reportUser=function(){if(currentIsGroup||!currentChatUid){showToast('গ্রুপকে রিপোর্ট করা যাবে না');return;}document.getElementById('moreMenu').classList.remove('active');
+  document.getElementById('reportTitle').textContent = document.getElementById('chatName').textContent + ' কে রিপোর্ট করুন';
+  openModal('reportModal');
+};
+window.submitReport = async function(){
+  const reason = document.querySelector('input[name="rr"]:checked').value;
+  await addDoc(collection(db,'reports'), { reporterId: currentUser.uid, targetId: currentChatUid, reason, status:'pending', createdAt: serverTimestamp() });
+  closeModal('reportModal');
+  showToast('রিপোর্ট জমা হয়েছে — টিম পর্যালোচনা করবে');
+};
+
+/* ---------- LETTERS ---------- */
+const REACTION_KEYS = ['❤️','🔥','😂','🥺'];
+function listenLetters(){
+  const q = query(collection(db,'letters'), orderBy('createdAt','desc'));
+  onSnapshot(q, async (snap)=>{
+    const el = document.getElementById('lettersList');
+    if(snap.empty){ el.innerHTML = `<div class="empty">এখনো কোনো পত্র নেই</div>`; return; }
+    el.innerHTML='';
+    for(const d of snap.docs){
+      const l = d.data();
+      const isOwn = l.ownerId === currentUser?.uid;
+      const uSnap = await getDoc(doc(db,'users', l.ownerId));
+      const uname = uSnap.exists() ? uSnap.data().username : '???';
+      const reactions = l.reactions || {};
+      const myReaction = currentUser ? reactions[currentUser.uid] : null;
+      const counts = {};
+      Object.values(reactions).forEach(e=> counts[e]=(counts[e]||0)+1);
+      const reactHtml=REACTION_KEYS.map(k=>{const cnt=counts[k]||0;return `<button class="reaction-btn ${myReaction===k?'active':''}" onclick="toggleReaction('${d.id}','${k}')">${k}${cnt?`<span class="cnt">${cnt}</span>`:''}</button>`;}).join('');
+      let reactorHtml='';if(isOwn&&Object.keys(reactions).length){const parts=[];for(const [uid,emoji] of Object.entries(reactions)){const rs=await getDoc(doc(db,'users',uid));parts.push(`${emoji} @${rs.exists()?rs.data().username:'কেউ'}`);}reactorHtml=`<div class="reactor-list"><b>রিয়েক্ট করেছে:</b> ${parts.join(' · ')}</div>`;}
+      const commentsPublic = l.commentsPublic !== false;
+      const card = document.createElement('div'); card.className='letter-card';
+      card.innerHTML = `<div class="letter-head"><div class="avatar" style="width:30px;height:30px;font-size:13px;">${uname[0].toUpperCase()}</div><span class="name">${uname}</span>${isOwn?'<span class="own-tag">আপনার</span>':''}</div>
+        <div class="letter-body"></div><div class="letter-time">${timeAgo(l.createdAt)}</div>
+        <div class="letter-foot"><div class="reactions">${reactHtml}</div><button class="comment-toggle" onclick="toggleComments('${d.id}', this)">মন্তব্য</button></div>${reactorHtml}
+        <div class="comments-box" id="comments-${d.id}"></div>`;
+      card.querySelector('.letter-body').textContent = l.text;
+      if(isOwn){
+        const box = document.createElement('div'); box.className='privacy-toggle'; box.style.margin='8px 0 0';
+        box.innerHTML = `<div class="switch ${commentsPublic?'on':''}" onclick="toggleCommentPrivacy('${d.id}', this)"><div class="knob"></div></div><span>মন্তব্য সবার জন্য পাবলিকলি দেখানো হচ্ছে${commentsPublic?'':' না'}</span>`;
+        card.appendChild(box);
+      }
+      el.appendChild(card);
+    }
+  });
+}
+function timeAgo(ts){
+  if(!ts || !ts.toDate) return 'এখন';
+  const diffMin = Math.floor((Date.now() - ts.toDate().getTime())/60000);
+  if(diffMin<1) return 'এখন'; if(diffMin<60) return diffMin+' মিনিট আগে';
+  const h = Math.floor(diffMin/60); if(h<24) return h+' ঘণ্টা আগে';
+  return Math.floor(h/24)+' দিন আগে';
+}
+window.postLetter = async function(){
+  const val = document.getElementById('letterInput').value.trim();
+  if(!val) return;
+  await addDoc(collection(db,'letters'), { ownerId: currentUser.uid, text: val, commentsPublic:true, reactions:{}, createdAt: serverTimestamp() });
+  document.getElementById('letterInput').value=''; closeModal('letterModal'); showToast('পত্র পোস্ট হয়েছে');
+};
+window.toggleReaction=async function(letterId,key){const ref=doc(db,'letters',letterId),snap=await getDoc(ref);if(!snap.exists()||!currentUser)return;const l=snap.data(),reactions=l.reactions||{};if(reactions[currentUser.uid]===key)delete reactions[currentUser.uid];else reactions[currentUser.uid]=key;await updateDoc(ref,{reactions});if(l.ownerId!==currentUser.uid&&reactions[currentUser.uid]===key)await addDoc(collection(db,'notifications'),{toUid:l.ownerId,fromUid:currentUser.uid,fromUsername:currentUser.username,type:'letter_reaction',letterId,reaction:key,read:false,createdAt:serverTimestamp()}).catch(()=>{});};
+window.toggleComments=async function(letterId,btn){const box=document.getElementById('comments-'+letterId),willOpen=!box.classList.contains('active');box.classList.toggle('active');if(!willOpen)return;const ls=await getDoc(doc(db,'letters',letterId));if(!ls.exists())return;const l=ls.data();if(l.ownerId!==currentUser.uid&&l.commentsPublic===false){box.innerHTML='<div class="comment-row"><span class="ctext">মন্তব্যগুলো এখন প্রাইভেট রাখা হয়েছে</span></div>';return;}const csnap=await getDocs(query(collection(db,'letters',letterId,'comments'),orderBy('createdAt','asc')));const comments=csnap.docs.map(d=>({id:d.id,...d.data()}));const children={};comments.forEach(c=>{if(c.replyTo)(children[c.replyTo] ||= []).push(c);});box.innerHTML='';function addRow(c,depth=0){const row=document.createElement('div');row.className='reply-row';row.style.marginLeft=Math.min(depth,3)*14+'px';row.innerHTML='<div class="reply-head"></div><div class="reply-text"></div><div class="reply-actions"><button class="reply-action reply-btn">↩ পাল্টা রিপ্লাই</button><button class="reply-action react-btn">❤️ রিয়েক্ট</button></div>';row.querySelector('.reply-head').textContent='@'+(c.authorUsername||'কেউ');row.querySelector('.reply-text').textContent=c.text||'';row.querySelector('.reply-btn').onclick=()=>replyToComment(letterId,c.id);row.querySelector('.react-btn').onclick=()=>reactToComment(letterId,c.id);const rr=Object.entries(c.reactions||{});if(rr.length){const rb=document.createElement('div');rb.className='reactor-list';rb.textContent='রিয়েক্ট করেছে: '+rr.map(([uid,e])=>e+' @'+(uid===currentUser.uid?currentUser.username:'...')).join(' · ');row.appendChild(rb);Promise.all(rr.map(async([uid])=>{if(uid===currentUser.uid)return [uid,currentUser.username];const us=await getDoc(doc(db,'users',uid));return [uid,us.exists()?us.data().username:'কেউ'];})).then(names=>{rb.textContent='রিয়েক্ট করেছে: '+rr.map(([uid,e])=>e+' @'+(names.find(x=>x[0]===uid)?.[1]||'কেউ')).join(' · ');}).catch(()=>{});}box.appendChild(row);(children[c.id]||[]).forEach(ch=>addRow(ch,depth+1));}comments.filter(c=>!c.replyTo).forEach(c=>addRow(c));const add=document.createElement('div');add.className='comment-add';add.innerHTML=`<input type="text" placeholder="মন্তব্য লিখুন..." id="cin-${letterId}"><button onclick="addComment('${letterId}')">পাঠাও</button>`;box.appendChild(add);};
+window.replyToComment=function(letterId,commentId){const input=document.getElementById('cin-'+letterId);if(input){input.dataset.replyTo=commentId;input.placeholder='পাল্টা রিপ্লাই লিখুন...';input.focus();}};
+window.reactToComment=async function(letterId,commentId){const ref=doc(db,'letters',letterId,'comments',commentId),snap=await getDoc(ref);if(!snap.exists())return;const c=snap.data(),reactions=c.reactions||{};if(reactions[currentUser.uid]==='❤️')delete reactions[currentUser.uid];else reactions[currentUser.uid]='❤️';await updateDoc(ref,{reactions});if(c.authorId!==currentUser.uid&&reactions[currentUser.uid]==='❤️')await addDoc(collection(db,'notifications'),{toUid:c.authorId,fromUid:currentUser.uid,fromUsername:currentUser.username,type:'comment_reaction',letterId,commentId,reaction:'❤️',read:false,createdAt:serverTimestamp()}).catch(()=>{});const btn=document.querySelector(`[onclick="toggleComments('${letterId}', this)"]`);if(btn){btn.click();setTimeout(()=>btn.click(),50);}};
+window.toggleCommentPrivacy = async function(letterId, el){
+  el.classList.toggle('on');
+  const nowPublic = el.classList.contains('on');
+  await updateDoc(doc(db,'letters',letterId), { commentsPublic: nowPublic });
+};
+
+/* ---------- COPY DETECTION ---------- */
+window.toggleSwitch = function(el){ el.classList.toggle('on'); showToast(el.classList.contains('on') ? 'কপি ডিটেকশন চালু হয়েছে' : 'কপি ডিটেকশন বন্ধ হয়েছে'); };
+document.addEventListener('copy', ()=>{
+  if(document.getElementById('ssToggle')?.classList.contains('on') && currentChatUid){
+    addDoc(collection(db,'notifications'), { toUid: currentChatUid, fromUid: currentUser?.uid, type:'copy', createdAt: serverTimestamp() }).catch(()=>{});
+  }
+});
+
+/* ---------- UNREAD COUNTS + NOTIFICATIONS ---------- */
+function rebuildUnreadMessageListeners(){globalUnreadUnsubs.forEach(u=>u&&u());globalUnreadUnsubs=[];if(!currentUser)return;const counts={};let total=0;const apply=(key,n)=>{total+=n-(counts[key]||0);counts[key]=n;unreadMessageCount=total;buildNav();};latestFriendIds.forEach(uid=>{const q=query(collection(db,'chats',pairId(currentUser.uid,uid),'messages'),orderBy('createdAt','desc'));globalUnreadUnsubs.push(onSnapshot(q,s=>{let n=0;s.forEach(d=>{const m=d.data();if(m.from!==currentUser.uid&&!m.seen)n++;});apply('f:'+uid,n);},()=>{}));});latestGroupIds.forEach(gid=>{const q=query(collection(db,'groups',gid,'messages'),orderBy('createdAt','desc'));globalUnreadUnsubs.push(onSnapshot(q,s=>{let n=0;s.forEach(d=>{const m=d.data();if(m.from!==currentUser.uid&&!(m.seenBy&&m.seenBy[currentUser.uid]))n++;});apply('g:'+gid,n);},()=>{}));});}
+function calculateUnreadLetters(){if(!currentUser)return;const seen=Number(localStorage.getItem(LETTER_SEEN_KEY+currentUser.uid)||0);const q=query(collection(db,'letters'),orderBy('createdAt','desc'));onSnapshot(q,s=>{let n=0;s.forEach(d=>{const ts=d.data().createdAt?.toDate?.()?.getTime?.()||0;if(ts>seen&&d.data().ownerId!==currentUser.uid)n++;});unreadLetterCount=n;buildNav();},()=>{});}
+async function markReactionNotificationsRead(){if(!currentUser)return;try{const q=query(collection(db,'notifications'),where('toUid','==',currentUser.uid),where('read','==',false));const s=await getDocs(q);await Promise.all(s.docs.filter(d=>['letter_reaction','comment_reaction'].includes(d.data().type)).map(d=>updateDoc(d.ref,{read:true})));reactionNoticeCount=0;buildNav();}catch(e){}}
+function listenNotifications(){if(unsubNotifications)unsubNotifications();const q=query(collection(db,'notifications'),where('toUid','==',currentUser.uid),limit(100));unsubNotifications=onSnapshot(q,s=>{reactionNoticeCount=s.docs.filter(d=>['letter_reaction','comment_reaction'].includes(d.data().type)).length;buildNav();},()=>{});}
+
+/* init nav + letters listener once auth ready is not required for letters (public) */
+buildNav();
+</script>
+</body>
+</html>
